@@ -70,6 +70,8 @@ h3{font-family:var(--font-display);font-size:17px;margin:14px 0 6px}
 table{border-collapse:collapse;width:100%;min-width:620px;font-variant-numeric:tabular-nums}
 th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:middle;font-size:15px}
 th{background:var(--bg);font-weight:700}
+table.ctr th,table.ctr td,th.h1,th.h2,th.h3,th.h4,td.c1,td.c2,td.c3,td.c4{text-align:center}
+table.ctr .lnk,td.c1 .lnk,td.c2 .lnk,td.c3 .lnk,td.c4 .lnk{text-align:center}
 th.h1{background:var(--v1);color:#222}th.h2{background:var(--v2);color:#222}
 th.h3{background:var(--v3);color:#fff}th.h4{background:var(--v4);color:#fff}
 td.c1{background:color-mix(in srgb,var(--v1) 45%,var(--surface))}
@@ -89,7 +91,7 @@ td.c4{background:color-mix(in srgb,var(--v4) 45%,var(--surface))}
 a.btn{text-decoration:none;display:inline-flex;align-items:center;color:var(--ink)}
 a.btn.primary{color:var(--accent-ink)}
 .task{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
-.task input{width:24px;height:24px;flex:none}
+.task input{width:28px;height:28px;flex:none}
 .task .t{flex:1}
 .overlay{position:fixed;inset:0;background:rgba(10,14,20,.55);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;z-index:10}
 .sheet{background:var(--surface);border-radius:14px;max-width:640px;width:100%;padding:20px;margin:auto}
@@ -117,7 +119,7 @@ canvas.sig{width:100%;height:150px;border:1px dashed var(--muted);border-radius:
       <div class="sub" id="datum"></div>
     </div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <span class="pill" id="ausgabezeit">Ausgabe 12:45–13:00 Uhr</span>
+      <span class="pill" id="ausgabezeit">Ausgabe 12:45–13:00 Uhr · Raum C 1.6</span>
       <button class="btn primary" data-act="open-abgabe">Handy abgeben</button>
     </div>
   </header>
@@ -201,7 +203,7 @@ function renderHeader(){
   document.getElementById('datum').textContent=now.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' · Schuljahr '+sy(now)+'/'+(sy(now)+1).toString().slice(2);
   var wd=now.getDay(), mins=now.getHours()*60+now.getMinutes();
   var on=wd>=1&&wd<=5&&mins>=765&&mins<=780;
-  var p=document.getElementById('ausgabezeit'); p.className='pill'+(on?' on':''); p.textContent=on?'Ausgabezeit läuft':'Ausgabe 12:45–13:00 Uhr';
+  var p=document.getElementById('ausgabezeit'); p.className='pill'+(on?' on':''); p.textContent=on?'Ausgabezeit läuft · Raum C 1.6':'Ausgabe 12:45–13:00 Uhr · Raum C 1.6';
   var n=openTasks().length;
   var tabs=[['schrank','Schrank'],['klassen','Klassenlisten'+(n?'<span class="badge" aria-label="'+n+' offene Aufgaben">'+n+'</span>':'')],['protokoll','Tagesliste'],['sicherung','Einstellungen']];
   document.getElementById('tabs').innerHTML=tabs.map(function(t){return '<button role="tab" data-act="tab" data-tab="'+t[0]+'" aria-selected="'+(tab===t[0])+'">'+t[1]+'</button>';}).join('');
@@ -248,7 +250,7 @@ function viewKlassen(){
   if(!ot.length){h+='<div class="hint">Alles erledigt.</div>';}
   ot.forEach(function(o){
     var s=stu(o.e.sid), id='t'+o.e.id+o.key;
-    h+='<div class="task"><input type="checkbox" id="'+id+'" data-act="task" data-id="'+o.e.id+'" data-key="'+o.key+'"><label class="t" for="'+id+'"><b>'+esc(s.name)+'</b> · '+o.e.v+'. Verstoß am '+dd(o.e.ab)+'<br><span class="hint">'+esc(o.label)+'</span></label>'+
+    h+='<div class="task"><input type="checkbox" id="'+id+'" data-act="task" data-id="'+o.e.id+'" data-key="'+o.key+'" aria-label="Als erledigt markieren: '+esc(s.name)+', '+esc(o.label)+'"><div class="t"><b>'+esc(s.name)+'</b> · '+o.e.v+'. Verstoß am '+dd(o.e.ab)+'<br><span class="hint">'+esc(o.label)+'</span></div>'+
        (o.key==='eltern'?'<button class="btn small" data-act="elterninfo" data-id="'+o.e.id+'">Elterninfo ansehen</button>':'')+(o.key==='kl'?'<button class="btn small" data-act="mail" data-id="'+o.e.id+'">Mail vorbereiten</button>':'')+'</div>';
   });
   h+='</div>';
@@ -259,7 +261,7 @@ function viewProtokoll(){
   var ev=S.events.filter(function(e){return ymd(new Date(e.ab))===tagDate||(e.aus&&ymd(new Date(e.aus))===tagDate);}).sort(function(a,b){return new Date(a.ab)-new Date(b.ab);});
   var dt=new Date(tagDate+'T12:00:00');
   var h='<div class="daynav"><button class="btn small" data-act="day" data-d="-1">‹ Vortag</button><input type="date" id="f-tag" value="'+tagDate+'" aria-label="Datum wählen"><button class="btn small" data-act="day" data-d="1">Folgetag ›</button><button class="btn small ghost" data-act="day" data-d="0">Heute</button></div>';
-  h+='<div class="card"><h2>Übersicht abgegebener digitaler Medien · '+dt.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'</h2>'+(ev.length?'':'<div class="hint">An diesem Tag gibt es keine Einträge.</div>')+'<div class="tablewrap"><table><thead><tr><th>Fach</th><th>Vorname</th><th>Klasse</th><th>Abgabe</th><th>Kürzel</th><th>Verstoß</th><th>Ausgabe</th><th>Kürzel</th><th>Unterschrift</th></tr></thead><tbody>';
+  h+='<div class="card"><h2>Übersicht abgegebener digitaler Medien · '+dt.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'</h2>'+(ev.length?'':'<div class="hint">An diesem Tag gibt es keine Einträge.</div>')+'<div class="tablewrap"><table class="ctr"><thead><tr><th>Fach</th><th>Vorname</th><th>Klasse</th><th>Abgabe</th><th>Kürzel</th><th>Verstoß</th><th>Ausgabe</th><th>Kürzel</th><th>Unterschrift</th></tr></thead><tbody>';
   ev.forEach(function(e){
     var s=stu(e.sid);
     h+='<tr><td>'+e.fach+'</td><td><button class="lnk" data-act="detail" data-id="'+e.id+'"><b>'+esc(s.name)+'</b></button></td><td>'+s.cls+'</td><td>'+dd(e.ab)+', '+tt(e.ab)+'</td><td>'+esc(e.abL)+'</td><td><span class="vtag '+vc(e.v)+'">'+e.v+'</span></td>'+
